@@ -1,0 +1,15 @@
+# IDE
+.idea/
+.vscode/
+
+# macOS
+.DS_Store
+
+# Flutter/Dart
+.dart_tool/
+.packages
+.pub-cache/
+build/
+
+# Android/Gradle
+android/.gradle/
