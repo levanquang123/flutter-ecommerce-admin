@@ -53077,7 +53077,7 @@ A.aAw.prototype={
 $0(){A.aa(this.a,!1,t.q).uu(!0)},
 $S:0}
 A.S1.prototype={
-aaA(){var s=this,r="https://nodejs-ecommerce-api-ph1z.onrender.com"
+aaA(){var s=this,r="https://nodejs-ecommerce-api-ph1z.onrender.com/"
 s.x=r
 s.ax=B.Ls
 s.gtx().b=r
