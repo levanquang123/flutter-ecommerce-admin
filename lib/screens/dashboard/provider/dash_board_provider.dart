@@ -69,7 +69,7 @@ class DashBoardProvider extends ChangeNotifier {
             ? productPriceCtrl.text.trim()
             : productOffPriceCtrl.text.trim(),
         'quantity': productQntCtrl.text.trim(),
-        'proVariantTypeId': selectedVariantType?.sId,
+        'proVariantTypeId': selectedVariantType?.sId ?? '',
         'proVariantId': selectedVariants,
       };
 
@@ -89,30 +89,44 @@ class DashBoardProvider extends ChangeNotifier {
         itemData: form,
       );
 
+      log('ADD PRODUCT RESPONSE: ${response.body}');
+
       if (response.isOk) {
         final apiResponse = ApiResponse.fromJson(response.body, null);
 
         if (apiResponse.success == true) {
           clearFields();
+          notifyListeners();
+
           SnackBarHelper.showSuccessSnackBar(apiResponse.message);
-          _dataProvider.getAllProducts();
+
+          await _dataProvider.getAllProducts();
+
           return true;
         } else {
-          SnackBarHelper.showErrorSnackBar(apiResponse.message);
+          SnackBarHelper.showErrorSnackBar(
+            apiResponse.message.isNotEmpty
+                ? apiResponse.message
+                : 'Add product failed.',
+          );
           return false;
         }
       } else {
         SnackBarHelper.showErrorSnackBar(
-          response.body?['message'] ?? response.statusText,
+          response.body?['message']?.toString() ??
+              response.statusText?.toString() ??
+              'Request failed.',
         );
         return false;
       }
-    } catch (e) {
-      log(e.toString());
+    } catch (e, s) {
+      log('addProduct error: $e');
+      log('stack: $s');
       SnackBarHelper.showErrorSnackBar('An error occurred: $e');
       return false;
     }
   }
+
   Future<bool> updateProduct() async {
     try {
       if (productForUpdate == null) return false;
@@ -155,7 +169,7 @@ class DashBoardProvider extends ChangeNotifier {
         if (apiResponse.success == true) {
           clearFields();
           SnackBarHelper.showSuccessSnackBar(apiResponse.message);
-          _dataProvider.getAllProducts();
+          await _dataProvider.getAllProducts();
           return true;
         } else {
           SnackBarHelper.showErrorSnackBar(apiResponse.message);
@@ -241,12 +255,10 @@ class DashBoardProvider extends ChangeNotifier {
     required List<Map<String, XFile?>>? imgXFiles,
     required Map<String, dynamic> formData,
   }) async {
-    // Loop over the provided image files and add them to the form data
     if (imgXFiles != null) {
       for (int i = 0; i < imgXFiles.length; i++) {
         XFile? imgXFile = imgXFiles[i]['image' + (i + 1).toString()];
         if (imgXFile != null) {
-          // Check if it's running on the web
           if (kIsWeb) {
             String fileName = imgXFile.name;
             Uint8List byteImg = await imgXFile.readAsBytes();
@@ -262,7 +274,6 @@ class DashBoardProvider extends ChangeNotifier {
       }
     }
 
-    // Create and return the FormData object
     final FormData form = FormData(formData);
     return form;
   }
@@ -315,19 +326,17 @@ class DashBoardProvider extends ChangeNotifier {
       selectedCategory = _dataProvider.categories.firstWhereOrNull(
           (element) => element.sId == product.proCategoryId?.sId);
 
-      final newListSubCategory = _dataProvider.subCategories
+      subCategoriesByCategory = _dataProvider.subCategories
           .where((subcategory) =>
               subcategory.categoryId?.sId == product.proCategoryId?.sId)
           .toList();
-      subCategoriesByCategory = newListSubCategory;
       selectedSubCategory = _dataProvider.subCategories.firstWhereOrNull(
           (element) => element.sId == product.proSubCategoryId?.sId);
 
-      final newListBrand = _dataProvider.brands
+      brandsBySubCategory = _dataProvider.brands
           .where((brand) =>
               brand.subCategoryId?.sId == product.proSubCategoryId?.sId)
           .toList();
-      brandsBySubCategory = newListBrand;
       selectedBrand = _dataProvider.brands.firstWhereOrNull(
           (element) => element.sId == product.proBrandId?.sId);
 
@@ -345,6 +354,7 @@ class DashBoardProvider extends ChangeNotifier {
     } else {
       clearFields();
     }
+    notifyListeners();
   }
 
   clearFields() {
@@ -377,6 +387,8 @@ class DashBoardProvider extends ChangeNotifier {
     subCategoriesByCategory = [];
     brandsBySubCategory = [];
     variantsByVariantType = [];
+
+    notifyListeners();
   }
 
   updateUI() {

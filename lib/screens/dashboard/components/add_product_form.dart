@@ -13,15 +13,27 @@ import '../../../widgets/custom_dropdown.dart';
 import '../../../widgets/custom_text_field.dart';
 import '../../../widgets/product_image_card.dart';
 
-class ProductSubmitForm extends StatelessWidget {
+class ProductSubmitForm extends StatefulWidget {
   final Product? product;
 
   const ProductSubmitForm({super.key, this.product});
 
   @override
+  State<ProductSubmitForm> createState() => _ProductSubmitFormState();
+}
+
+class _ProductSubmitFormState extends State<ProductSubmitForm> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<DashBoardProvider>().setDataForUpdateProduct(widget.product);
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     var size = MediaQuery.of(context).size;
-    context.dashBoardProvider.setDataForUpdateProduct(product);
     return SingleChildScrollView(
       child: Form(
         key: context.dashBoardProvider.addProductFormKey,
@@ -46,7 +58,7 @@ class ProductSubmitForm extends StatelessWidget {
                         labelText: 'Main Image',
                         imageFile: dashProvider.selectedMainImage,
                         imageUrlForUpdateImage:
-                            product?.images.safeElementAt(0)?.url,
+                            widget.product?.images.safeElementAt(0)?.url,
                         onTap: () {
                           dashProvider.pickImage(imageCardNumber: 1);
                         },
@@ -63,7 +75,7 @@ class ProductSubmitForm extends StatelessWidget {
                         labelText: 'Second image',
                         imageFile: dashProvider.selectedSecondImage,
                         imageUrlForUpdateImage:
-                            product?.images.safeElementAt(1)?.url,
+                            widget.product?.images.safeElementAt(1)?.url,
                         onTap: () {
                           dashProvider.pickImage(imageCardNumber: 2);
                         },
@@ -80,7 +92,7 @@ class ProductSubmitForm extends StatelessWidget {
                         labelText: 'Third image',
                         imageFile: dashProvider.selectedThirdImage,
                         imageUrlForUpdateImage:
-                            product?.images.safeElementAt(2)?.url,
+                            widget.product?.images.safeElementAt(2)?.url,
                         onTap: () {
                           dashProvider.pickImage(imageCardNumber: 3);
                         },
@@ -97,7 +109,7 @@ class ProductSubmitForm extends StatelessWidget {
                         labelText: 'Fourth image',
                         imageFile: dashProvider.selectedFourthImage,
                         imageUrlForUpdateImage:
-                            product?.images.safeElementAt(3)?.url,
+                            widget.product?.images.safeElementAt(3)?.url,
                         onTap: () {
                           dashProvider.pickImage(imageCardNumber: 4);
                         },
@@ -114,7 +126,7 @@ class ProductSubmitForm extends StatelessWidget {
                         labelText: 'Fifth image',
                         imageFile: dashProvider.selectedFifthImage,
                         imageUrlForUpdateImage:
-                            product?.images.safeElementAt(4)?.url,
+                            widget.product?.images.safeElementAt(4)?.url,
                         onTap: () {
                           dashProvider.pickImage(imageCardNumber: 5);
                         },
@@ -261,7 +273,7 @@ class ProductSubmitForm extends StatelessWidget {
                       inputType: TextInputType.number,
                       onSave: (val) {},
                       validator: (value) {
-                        if (value == null) {
+                        if (value == null || value.trim().isEmpty) {
                           return 'Please enter quantity';
                         }
                         return null;
@@ -337,17 +349,19 @@ class ProductSubmitForm extends StatelessWidget {
                       backgroundColor: primaryColor,
                     ),
                     onPressed: () async {
-                      if (context
-                          .dashBoardProvider.addProductFormKey.currentState!
-                          .validate()) {
-                        context
-                            .dashBoardProvider.addProductFormKey.currentState!
-                            .save();
-                        bool success =
-                            await context.dashBoardProvider.submitProduct();
-                        if (success) {
-                          Navigator.of(context).pop();
-                        }
+                      final formState =
+                          context.dashBoardProvider.addProductFormKey.currentState;
+
+                      if (formState == null) return;
+
+                      if (!formState.validate()) return;
+
+                      formState.save();
+
+                      final success = await context.dashBoardProvider.submitProduct();
+
+                      if (success && context.mounted) {
+                        Navigator.of(context).pop();
                       }
                     },
                     child: Text('Submit'),
